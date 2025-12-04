@@ -8,6 +8,9 @@ from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.neural_network import MLPRegressor
+from PIL import Image
+from sklearn.cluster import KMeans
+
 
 try:
     import tensorflow as tf
@@ -902,3 +905,96 @@ if __name__ == "__main__":
     test_temporal_train_test_split()
     test_create_sequences()
     print("All tests completed!")
+
+# Topic 1 Task 3:
+def image_to_rgb_array(image_path):
+    """
+    A function to load an image file and convert it to RGB np.array
+    
+    Input
+    -----
+    image_path: str
+        Path to the image file
+        
+    Output
+    ------
+    np.array(h, w, 3): A 3d map of each pixel in RGB encoding
+    """
+    img = Image.open(image_path)
+    rgb_array = np.array(img)
+    
+    # If image has alpha channel (RGBA), take only RGB
+    if len(rgb_array.shape) == 3 and rgb_array.shape[2] == 4:
+        rgb_array = rgb_array[:, :, :3]
+    
+    return rgb_array
+
+# Topic 1 Task 4:
+
+def categorize_pixels(rgb_array):
+    """
+    Kategoriser piksler som rød, grønn eller blå
+    """
+    import numpy as np
+    h, w, _ = rgb_array.shape
+    categories = np.zeros((h, w), dtype=int)
+    for i in range(h):
+        for j in range(w):
+            r, g, b = rgb_array[i, j]
+            if r > g and r > b:
+                categories[i, j] = 0
+            elif g > r and g > b:
+                categories[i, j] = 1
+            elif b > r and b > g:
+                categories[i, j] = 2
+    return categories
+
+# Topic 1 Task 5:
+
+def apply_kmeans_clustering(rgb_array, n_clusters=6, visualize=True):
+    """
+    Apply K-means clustering to an RGB array
+    
+    Input
+    -----
+    rgb_array: np.array
+        RGB image array (h, w, 3)
+    n_clusters: int
+        Number of clusters (default: 6)
+    visualize: bool
+        Whether to show the clustering visualization
+        
+    Output
+    ------
+    predicted_image: np.array
+        Cluster labels reshaped to image dimensions (h, w)
+    kmeans: KMeans object
+        Fitted KMeans model
+    """
+    from sklearn.cluster import KMeans
+    import numpy as np
+    import matplotlib.pyplot as plt
+    
+    h, w, _ = rgb_array.shape
+    rgb_flat = rgb_array.reshape(-1, 3)
+    rgb_flat = rgb_flat.astype(np.float64)
+    
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10, max_iter=300)
+    kmeans.fit(rgb_flat)
+    cluster_labels = kmeans.labels_
+    predicted_image = cluster_labels.reshape(h, w)
+    
+    print(f"Cluster centers:\n{kmeans.cluster_centers_}")
+    print(f"Unique clusters: {np.unique(cluster_labels)}")
+    print(f"Cluster distribution: {np.bincount(cluster_labels)}")
+    
+    if visualize:
+        plt.figure(figsize=(10, 10))
+        plt.imshow(predicted_image, cmap='viridis')
+        plt.title(f'K-Means Clustering ({n_clusters} kluster)')
+        plt.colorbar(label='Cluster ID')
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
+    
+    return predicted_image, kmeans
