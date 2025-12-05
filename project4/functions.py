@@ -16,7 +16,7 @@ try:
     import tensorflow as tf
     from tensorflow import keras
     from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import LSTM, Dense, Dropout
+    from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
     from tensorflow.keras.callbacks import EarlyStopping
     TENSORFLOW_AVAILABLE = True
 except ImportError:
@@ -622,10 +622,11 @@ def build_lstm_model(lookback, units=50, dropout=0.2, layers=2):
     assert layers >= 1, "Must have at least 1 LSTM layer"
 
     model = Sequential()
+    model.add(Input(shape=(lookback, 1)))
     if layers == 1:
-        model.add(LSTM(units, input_shape=(lookback, 1)))
+        model.add(LSTM(units))
     else:
-        model.add(LSTM(units, return_sequences=True, input_shape=(lookback, 1)))
+        model.add(LSTM(units, return_sequences=True))
         model.add(Dropout(dropout))
         for _ in range(1, layers - 1):
             model.add(LSTM(units, return_sequences=True))
